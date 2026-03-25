@@ -1,0 +1,101 @@
+<!DOCTYPE html><html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Papers, Please — Mini</title>
+  <style>
+    body { font-family: Arial; background:#222; color:#eee; margin:0; }
+    #game { display:flex; height:100vh; }
+    #left, #right { padding:20px; }
+    #left { width:60%; background:#333; }
+    #right { width:40%; background:#111; }
+    button { padding:10px; margin:5px; }
+    .doc { background:#555; padding:10px; margin:5px 0; }
+  </style>
+</head>
+<body>
+<div id="game">
+  <div id="left">
+    <h2>Проверка документов</h2>
+    <div id="person"></div>
+    <div id="docs"></div>
+    <button onclick="approve()">✅ Пропустить</button>
+    <button onclick="deny()">❌ Отказать</button>
+  </div>
+  <div id="right">
+    <h2>Семья</h2>
+    <div id="family"></div>
+    <h2>Деньги</h2>
+    <div id="money"></div>
+    <h2>Событие</h2>
+    <div id="event"></div>
+  </div>
+</div><script>
+let state = {
+  money: 30,
+  foodCost: 10,
+  heatCost: 5,
+  family: ["Жена", "Сын", "Дядя"],
+  currentPerson: null,
+  day: 1
+};
+
+const people = [
+  {name:"Иван", country:"Арстоцка", passport:true},
+  {name:"Анна", country:"Колечия", passport:false},
+  {name:"Сергей", country:"Арстоцка", passport:true}
+];
+
+function nextPerson() {
+  state.currentPerson = people.shift();
+  if(!state.currentPerson) return endDay();
+
+  document.getElementById("person").innerText =
+    `Имя: ${state.currentPerson.name}, Страна: ${state.currentPerson.country}`;
+
+  document.getElementById("docs").innerHTML =
+    state.currentPerson.passport ? '<div class="doc">Паспорт есть</div>' : '<div class="doc">Нет паспорта</div>';
+}
+
+function approve() {
+  if(state.currentPerson.passport) {
+    state.money += 5;
+  } else {
+    state.money -= 5;
+  }
+  nextPerson();
+  updateUI();
+}
+
+function deny() {
+  if(!state.currentPerson.passport) {
+    state.money += 5;
+  } else {
+    state.money -= 5;
+  }
+  nextPerson();
+  updateUI();
+}
+
+function updateUI() {
+  document.getElementById("money").innerText = state.money + "$";
+  document.getElementById("family").innerText = state.family.join(", ");
+}
+
+function endDay() {
+  let eventText = "";
+  } else {
+    eventText = "День прошёл спокойно";
+  }
+
+  // траты
+  state.money -= state.foodCost;
+  state.money -= state.heatCost;
+
+  document.getElementById("event").innerText = eventText;
+  updateUI();
+}
+
+updateUI();
+nextPerson();
+</script></body>
+</html>
