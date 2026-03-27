@@ -113,3 +113,41 @@
 </script>
 </body>
 </html>
+    function endDay() {
+        const food = 15; // Расходы на еду
+        const heat = 10; // Расходы на отопление
+        const rent = 5;  // Аренда
+        const totalOut = food + heat + rent;
+        const finalBalance = money - totalOut;
+
+        const screen = document.getElementById('end-day-screen');
+        const report = document.getElementById('report');
+        
+        screen.classList.remove('hidden');
+
+        if (finalBalance < 0) {
+            // Сценарий ареста
+            report.innerHTML = `
+                <div style="text-align:center;">
+                    <h1 style="color: #f44336; font-size: 40px;">ВЫ АРЕСТОВАНЫ ИЗ-ЗА ДОЛГОВ</h1>
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTP_T5nxjV9ELjtlsw1UdrDr5EipAu0obwyXCOFv_BJQA&s=10" 
+                         style="width:300px; border: 5px solid #f44336; margin: 20px 0;">
+                    <p>Баланс: ${finalBalance}$</p>
+                    <p>Ваша семья отправлена в трудовой лагерь.</p>
+                    <button onclick="location.reload()" style="background:#f44336; color:white; padding:15px;">ПОПРОБОВАТЬ СНОВА</button>
+                </div>
+            `;
+        } else {
+            // Сценарий успеха
+            report.innerHTML = `
+                <h2>Смена окончена успешно</h2>
+                <p>Заработано: ${money}$</p>
+                <p>Расходы: -${totalOut}$</p>
+                <hr>
+                <p>Остаток: ${finalBalance}$</p>
+                <p style="color: #4caf50;">Слава Арстотцке! Семья сыта.</p>
+                <button onclick="location.reload()" style="margin-top:20px;">Следующий день (в разработке)</button>
+            `;
+        }
+    }
+          
