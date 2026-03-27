@@ -1,101 +1,115 @@
-<!DOCTYPE html><html lang="ru">
+  <!DOCTYPE html>
+<html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Papers, Please </title>
-  <style>
-    body { font-family: Arial; background:#222; color:#eee; margin:0; }
-    #game { display:flex; height:100vh; }
-    #left, #right { padding:20px; }
-    #left { width:60%; background:#333; }
-    #right { width:40%; background:#111; }
-    button { padding:10px; margin:5px; }
-    .doc { background:#555; padding:10px; margin:5px 0; }
-  </style>
+    <meta charset="UTF-8">
+    <title>Papers, Please - Day 1 (Web Edition)</title>
+    <style>
+        body { background: #222; color: #eee; font-family: 'Courier New', monospace; display: flex; justify-content: center; padding: 20px; }
+        #game-container { width: 800px; background: #333; border: 4px solid #555; padding: 20px; position: relative; }
+        .stats { display: flex; justify-content: space-between; border-bottom: 2px solid #555; padding-bottom: 10px; margin-bottom: 20px; }
+        #desk { display: flex; gap: 20px; }
+        #passport { width: 250px; background: #e0c9a6; color: #000; padding: 15px; border-radius: 5px; box-shadow: 5px 5px 0 #000; }
+        #dialogue-box { height: 100px; background: #111; padding: 10px; margin-top: 20px; border: 2px solid #777; overflow-y: auto; }
+        .controls { margin-top: 20px; display: flex; gap: 10px; }
+        button { padding: 10px 20px; cursor: pointer; border: none; font-weight: bold; }
+        .approve { background: #4caf50; color: white; }
+        .deny { background: #f44336; color: white; }
+        .hidden { display: none; }
+        #end-day-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; color: #fff; padding: 40px; box-sizing: border-box; }
+    </style>
 </head>
 <body>
-<div id="game">
-  <div id="left">
-    <h2>Проверка документов</h2>
-    <div id="person"></div>
-    <div id="docs"></div>
-    <button onclick="approve()">✅ Пропустить</button>
-    <button onclick="deny()">❌ Отказать</button>
-  </div>
-  <div id="right">
-    <h2>Семья</h2>
-    <div id="family"></div>
-    <h2>Деньги</h2>
-    <div id="money"></div>
-    <h2>Событие</h2>
-    <div id="event"></div>
-  </div>
-</div><script>
-let state = {
-  money: 30,
-  foodCost: 10,
-  heatCost: 5,
-  family: ["Жена", "Сын", "Дядя"],
-  currentPerson: null,
-  day: 1
-};
 
-const people = [
-  {name:"Иван", country:"Арстоцка", passport:true},
-  {name:"Анна", country:"Колечия", passport:false},
-  {name:"Сергей", country:"Арстоцка", passport:true}
-];
+<div id="game-container">
+    <div class="stats">
+        <div>ДЕНЬ: 1</div>
+        <div>Баланс: <span id="money">20</span>$</div>
+        <div id="family-status">Семья: Ок</div>
+    </div>
 
-function nextPerson() {
-  state.currentPerson = people.shift();
-  if(!state.currentPerson) return endDay();
+    <div id="desk">
+        <div id="passport">
+            <h3 style="text-align:center; margin-top:0;">ПАСПОРТ</h3>
+            <p>Имя: <span id="p-name">???</span></p>
+            <p>Город: <span id="p-city">???</span></p>
+            <p style="font-size: 10px; margin-top: 20px;">Глория Арстотцке!</p>
+        </div>
+        
+        <div style="flex-grow: 1;">
+            <div id="dialogue-box">Ожидание туриста...</div>
+            <div class="controls">
+                <button class="approve" onclick="decide(true)">ОДОБРИТЬ</button>
+                <button class="deny" onclick="decide(false)">ОТКАЗАТЬ</button>
+            </div>
+        </div>
+    </div>
 
-  document.getElementById("person").innerText =
-    `Имя: ${state.currentPerson.name}, Страна: ${state.currentPerson.country}`;
+    <div id="end-day-screen" class="hidden">
+        <h1>Смена окончена</h1>
+        <div id="report"></div>
+        <button onclick="location.reload()" style="margin-top:20px;">Начать заново</button>
+    </div>
+</div>
 
-  document.getElementById("docs").innerHTML =
-    state.currentPerson.passport ? '<div class="doc">Паспорт есть</div>' : '<div class="doc">Нет паспорта</div>';
-}
+<script>
+    let money = 20;
+    let currentPerson = 0;
+    const log = document.getElementById('dialogue-box');
+    
+    const queue = [
+        { name: "Иван Петров", city: "Грестин", valid: true, msg: "Здравствуйте. Вот мой паспорт." },
+        { name: "Серпу Бенедиктов", city: "Неизвестно", valid: false, msg: "Привет, сынок! Я без бумаг, но мне очень надо к внукам. Помоги деду переехать, я в долгу не останусь!" },
+        { name: "Неизвестный", city: "Альтер", valid: false, msg: "Я просто проездом." }
+    ];
 
-function approve() {
-  if(state.currentPerson.passport) {
-    state.money += 5;
-  } else {
-    state.money -= 5;
-  }
-  nextPerson();
-  updateUI();
-}
+    function loadPerson() {
+        if (currentPerson >= queue.length) {
+            endDay();
+            return;
+        }
+        const p = queue[currentPerson];
+        document.getElementById('p-name').innerText = p.name;
+        document.getElementById('p-city').innerText = p.city;
+        log.innerText = p.msg;
+    }
 
-function deny() {
-  if(!state.currentPerson.passport) {
-    state.money += 5;
-  } else {
-    state.money -= 5;
-  }
-  nextPerson();
-  updateUI();
-}
+    function decide(approved) {
+        const p = queue[currentPerson];
+        if (approved === p.valid) {
+            money += 5;
+            log.innerText = "Правильно. +5$";
+        } else {
+            money -= 5;
+            log.innerText = "ОШИБКА! Штраф -5$";
+            if (p.name === "Серпу Бенедиктов" && approved) {
+                alert("Дед шепчет: 'Спасибо, малый! Скоро увидимся, помогу с жильем!'");
+            }
+        }
+        
+        currentPerson++;
+        setTimeout(loadPerson, 1500);
+    }
 
-function updateUI() {
-  document.getElementById("money").innerText = state.money + "$";
-  document.getElementById("family").innerText = state.family.join(", ");
-}
+    function endDay() {
+        const food = 10;
+        const heat = 10;
+        const rent = 5;
+        const totalOut = food + heat + rent;
+        const finalBalance = money - totalOut;
 
-function endDay() {
-  let eventText = "";
-  } else {
-    eventText = "День прошёл спокойно";
-  }
+        document.getElementById('end-day-screen').classList.remove('hidden');
+        document.getElementById('report').innerHTML = `
+            <p>Заработано за день: ${money}$</p>
+            <p>Еда: -${food}$</p>
+            <p>Отопление: -${heat}$</p>
+            <p>Аренда: -${rent}$</p>
+            <hr>
+            <p>Итоговый баланс: ${finalBalance}$</p>
+            <p>${finalBalance < 0 ? "Семья голодает. Вы арестованы за долги." : "Семья в порядке. Слава Арстотцке!"}</p>
+        `;
+    }
 
-  // траты
-  state.money -= state.foodCost;
-  state.money -= state.heatCost;
-
-  document.getElementById("event").innerText = eventText;
-  updateUI();
-}
-
-updateUI();
-nextPerson();
-</script></body>
+    loadPerson();
+</script>
+</body>
 </html>
