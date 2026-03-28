@@ -1,127 +1,102 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Papers, Please - Day 1 (Web Edition)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Papers, Please - Day 1</title>
     <style>
-        body { background: #222; color: #eee; font-family: 'Courier New', monospace; display: flex; justify-content: center; padding: 20px; }
-        #game-container { width: 800px; background: #333; border: 4px solid #555; padding: 20px; position: relative; }
-        .stats { display: flex; justify-content: space-between; border-bottom: 2px solid #555; padding-bottom: 10px; margin-bottom: 20px; }
-        #desk { display: flex; gap: 20px; }
-        #passport { width: 250px; background: #e0c9a6; color: #000; padding: 15px; border-radius: 5px; box-shadow: 5px 5px 0 #000; }
-        #dialogue-box { height: 100px; background: #111; padding: 10px; margin-top: 20px; border: 2px solid #777; overflow-y: auto; }
-        .controls { margin-top: 20px; display: flex; gap: 10px; }
-        button { padding: 10px 20px; cursor: pointer; border: none; font-weight: bold; }
+        body { background: #1a1a1a; color: #eee; font-family: 'Courier New', monospace; margin: 0; display: flex; justify-content: center; }
+        #game-container { width: 100%; max-width: 600px; background: #333; border: 4px solid #555; padding: 15px; position: relative; min-height: 90vh; }
+        .stats { display: flex; justify-content: space-between; border-bottom: 2px solid #555; padding-bottom: 10px; margin-bottom: 20px; font-weight: bold; }
+        #passport { width: 80%; margin: 0 auto; background: #e0c9a6; color: #000; padding: 15px; border-radius: 5px; box-shadow: 5px 5px 0 #000; }
+        #dialogue-box { height: 80px; background: #000; padding: 10px; margin: 20px 0; border: 2px solid #777; overflow-y: auto; font-size: 14px; }
+        .controls { display: flex; gap: 10px; justify-content: center; }
+        button { padding: 15px; cursor: pointer; border: none; font-weight: bold; flex: 1; }
         .approve { background: #4caf50; color: white; }
         .deny { background: #f44336; color: white; }
+        #arrest-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; display: none; text-align: center; padding-top: 50px; }
         .hidden { display: none; }
-        #end-day-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; color: #fff; padding: 40px; box-sizing: border-box; }
     </style>
 </head>
 <body>
 
 <div id="game-container">
+    <div id="arrest-screen">
+        <h1 style="color: #ff0000;">ВЫ АРЕСТОВАНЫ ИЗ-ЗА ДОЛГОВ</h1>
+        <img id="arrest-img" src="https://encrypted-tbn0.gstatic.com" style="width: 80%; border: 3px solid red;">
+        <p id="final-money" style="font-size: 20px; margin-top: 15px;"></p>
+        <button onclick="location.reload()" style="background: red; color: white; width: auto; padding: 10px 40px;">ПЕРЕИГРАТЬ</button>
+    </div>
+
     <div class="stats">
-        <div>ДЕНЬ: 1</div>
-        <div>Баланс: <span id="money">20</span>$</div>
-        <div id="family-status">Семья: Ок</div>
+        <div>ДЕНЬ 1</div>
+        <div>СЧЕТ: <span id="money-display">20</span>$</div>
     </div>
 
-    <div id="desk">
-        <div id="passport">
-            <h3 style="text-align:center; margin-top:0;">ПАСПОРТ</h3>
-            <p>Имя: <span id="p-name">???</span></p>
-            <p>Город: <span id="p-city">???</span></p>
-            <p style="font-size: 10px; margin-top: 20px;">Глория Арстотцке!</p>
-        </div>
-        
-        <div style="flex-grow: 1;">
-            <div id="dialogue-box">Ожидание туриста...</div>
-            <div class="controls">
-                <button class="approve" onclick="decide(true)">ОДОБРИТЬ</button>
-                <button class="deny" onclick="decide(false)">ОТКАЗАТЬ</button>
-            </div>
-        </div>
+    <div id="passport">
+        <h3 style="text-align:center; margin: 0 0 10px 0;">ARSTOTZKA PASSPORT</h3>
+        <p>Имя: <b id="p-name">---</b></p>
+        <p>Город: <b id="p-city">---</b></p>
     </div>
 
-    <div id="end-day-screen" class="hidden">
-        <h1>Смена окончена</h1>
-        <div id="report"></div>
-        <button onclick="location.reload()" style="margin-top:20px;">Начать заново</button>
+    <div id="dialogue-box">Ожидание...</div>
+
+    <div class="controls">
+        <button class="approve" onclick="check(true)">ОДОБРИТЬ</button>
+        <button class="deny" onclick="check(false)">ОТКАЗАТЬ</button>
     </div>
 </div>
 
 <script>
     let money = 20;
-    let currentPerson = 0;
-    const log = document.getElementById('dialogue-box');
+    let personIndex = 0;
     
-    const queue = [
-        { name: "Иван Петров", city: "Грестин", valid: true, msg: "Здравствуйте. Вот мой паспорт." },
-        { name: "Серпу Бенедиктов", city: "Неизвестно", valid: false, msg: "Привет, сынок! Я без бумаг, но мне очень надо к внукам. Помоги деду переехать, я в долгу не останусь!" },
-        { name: "Неизвестный", city: "Альтер", valid: false, msg: "Я просто проездом." }
+    const people = [
+        { name: "Иван Петров", city: "Грестин", valid: true, msg: "Добрый день. Мои документы." },
+        { name: "Серпу Бенедиктов", city: "???", valid: false, msg: "О, привет! Это я, Серпу! Пустишь старика без бумажек? Я помогу потом!" },
+        { name: "Шпион", city: "Орбит", valid: false, msg: "Просто штампуй, не задавай вопросов." }
     ];
 
-    function loadPerson() {
-        if (currentPerson >= queue.length) {
-            endDay();
+    function updatePerson() {
+        if (personIndex >= people.length) {
+            alert("Смена окончена! Семья выжила .");
+            location.reload();
             return;
         }
-        const p = queue[currentPerson];
+        const p = people[personIndex];
         document.getElementById('p-name').innerText = p.name;
         document.getElementById('p-city').innerText = p.city;
-        log.innerText = p.msg;
+        document.getElementById('dialogue-box').innerText = p.msg;
     }
 
-    function decide(approved) {
-        const p = queue[currentPerson];
-        if (approved === p.valid) {
+    function check(isApprove) {
+        const p = people[personIndex];
+        
+        if (isApprove === p.valid) {
             money += 5;
-            log.innerText = "Правильно. +5$";
+            document.getElementById('dialogue-box').innerText = "ПРАВИЛЬНО. +5$";
         } else {
-            money -= 5;
-            log.innerText = "ОШИБКА! Штраф -5$";
-            if (p.name === "Серпу Бенедиктов" && approved) {
-                alert("Дед шепчет: 'Спасибо, малый! Скоро увидимся, помогу с жильем!'");
+            money -= 15; // Большой штраф для теста ареста
+            document.getElementById('dialogue-box').innerText = "ОШИБКА! Штраф -15$";
+            
+            if (money < 0) {
+                showArrest();
+                return;
             }
         }
         
-        currentPerson++;
-        setTimeout(loadPerson, 1500);
+        document.getElementById('money-display').innerText = money;
+        personIndex++;
+        setTimeout(updatePerson, 1000);
     }
 
-    function endDay() {
-        const food = 10;
-        const heat = 10;
-        const rent = 5;
-        const totalOut = food + heat + rent;
-        const finalBalance = money - totalOut;
-
-        document.getElementById('end-day-screen').classList.remove('hidden');
-        document.getElementById('report').innerHTML = `
-            <p>Заработано за день: ${money}$</p>
-            <p>Еда: -${food}$</p>
-            <p>Отопление: -${heat}$</p>
-            <p>Аренда: -${rent}$</p>
-            <hr>
-            <p>Итоговый баланс: ${finalBalance}$</p>
-            <p>${finalBalance < 0 ? "Семья голодает. Вы арестованы за долги." : "Семья в порядке. Слава Арстотцке!"}</p>
-        `;
+    function showArrest() {
+        document.getElementById('arrest-screen').style.display = 'block';
+        document.getElementById('final-money').innerText = "Ваш баланс: " + money + "$";
     }
 
-    loadPerson();
+    updatePerson();
 </script>
+
 </body>
 </html>
-        report.innerHTML = `
-            <div style="text-align:center;">
-                <h1 style="color: #f44336; font-size: 40px; text-transform: uppercase;">ВЫ АРЕСТОВАНЫ ИЗ-ЗА ДОЛГОВ</h1>
-                <img src="https://encrypted-tbn0.gstatic.com" 
-                     style="width:400px; border: 5px solid #f44336; margin: 20px 0; box-shadow: 0 0 20px red;">
-                <p style="font-size: 20px;">Ваш баланс: ${money}$</p>
-                <p>Министерство контроля не терпит должников.</p>
-                <button onclick="location.reload()" style="background:#f44336; color:white; padding:20px; font-size:20px; border:none; cursor:pointer; margin-top:20px;">ПЕРЕИГРАТЬ СМЕНУ</button>
-            </div>
-        `;
-    }
-              
