@@ -113,44 +113,6 @@
 </script>
 </body>
 </html>
-    function decide(approved) {
-        const p = queue[currentPerson];
-        
-        if (approved === p.valid) {
-            money += 5;
-            log.innerText = "Правильно. +5$";
-            updateUI();
-        } else {
-            money -= 10; // Увеличил штраф для азарта
-            log.innerText = "ОШИБКА! Штраф -10$";
-            updateUI();
-            
-            // МГНОВЕННАЯ ПРОВЕРКА НА АРЕСТ
-            if (money < 0) {
-                showArrestScreen();
-                return; // Прекращаем выполнение кода
-            }
-
-            if (p.name === "Серпу Бенедиктов" && approved) {
-                alert("Дед шепчет: 'Спасибо, малый! Скоро увидимся, помогу с жильем!'");
-            }
-        }
-        
-        currentPerson++;
-        setTimeout(loadPerson, 1500);
-    }
-
-    function updateUI() {
-        document.getElementById('money').innerText = money;
-    }
-
-    function showArrestScreen() {
-        const screen = document.getElementById('end-day-screen');
-        const report = document.getElementById('report');
-        
-        screen.classList.remove('hidden');
-        screen.style.zIndex = "100"; // Поверх всего
-
         report.innerHTML = `
             <div style="text-align:center;">
                 <h1 style="color: #f44336; font-size: 40px; text-transform: uppercase;">ВЫ АРЕСТОВАНЫ ИЗ-ЗА ДОЛГОВ</h1>
