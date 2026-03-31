@@ -76,8 +76,8 @@
             money += 5;
             document.getElementById('dialogue-box').innerText = "ПРАВИЛЬНО. +5$";
         } else {
-            money -= 15; // Большой штраф для теста ареста
-            document.getElementById('dialogue-box').innerText = "ОШИБКА! Штраф -15$";
+            money -= 5; // Большой штраф для теста ареста
+            document.getElementById('dialogue-box').innerText = "ОШИБКА! Штраф -5$";
             
             if (money < 0) {
                 showArrest();
