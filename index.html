@@ -79,7 +79,7 @@
             money -= 5; // Большой штраф для теста ареста
             document.getElementById('dialogue-box').innerText = "ОШИБКА! Штраф -5$";
             
-            if (money < 0) {
+            if (money < 10) {
                 showArrest();
                 return;
             }
