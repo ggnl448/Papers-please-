@@ -14,18 +14,36 @@
         button { padding: 15px; cursor: pointer; border: none; font-weight: bold; flex: 1; }
         .approve { background: #4caf50; color: white; }
         .deny { background: #f44336; color: white; }
-        #arrest-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; display: none; text-align: center; padding-top: 50px; }
-        .hidden { display: none; }
+        
+        /* Стили для финального отчета */
+        #report-screen, #arrest-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; display: none; text-align: center; padding-top: 50px; }
+        .report-paper { background: #fff; color: #000; width: 70%; margin: 0 auto; padding: 20px; text-align: left; box-shadow: 10px 10px 0 #444; }
+        .red-text { color: #d32f2f; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div id="game-container">
+    <!-- Экран ареста -->
     <div id="arrest-screen">
-        <h1 style="color: #ff0000;">ВЫ АРЕСТОВАНЫ ИЗ-ЗА ДОЛГОВ</h1>
-        <img id="arrest-img" src="https://encrypted-tbn0.gstatic.com" style="width: 80%; border: 3px solid red;">
+        <h1 style="color: #ff0000;">ВЫ АРЕСТОВАНЫ</h1>
+        <img src="https://gstatic.com" style="width: 80%; border: 3px solid red;">
         <p id="final-money" style="font-size: 20px; margin-top: 15px;"></p>
         <button onclick="location.reload()" style="background: red; color: white; width: auto; padding: 10px 40px;">ПЕРЕИГРАТЬ</button>
+    </div>
+
+    <!-- Экран отчета в конце смены -->
+    <div id="report-screen">
+        <div class="report-paper">
+            <h2 style="text-align: center; border-bottom: 2px solid #000;">ОТЧЕТ ЗА ДЕНЬ</h2>
+            <p>Заработано: <span id="earned-val">0</span>$</p>
+            <p>Отопление: <span class="red-text">-5$</span></p>
+            <p>Еда: <span class="red-text">-10$</span></p>
+            <hr>
+            <p style="font-size: 1.2em;">ИТОГО: <b id="total-val">0</b>$</p>
+            <p id="family-status" style="font-weight: bold;"></p>
+            <button onclick="location.reload()" style="background: #333; color: white; width: 100%; margin-top: 10px;">СЛЕДУЮЩИЙ ДЕНЬ</button>
+        </div>
     </div>
 
     <div class="stats">
@@ -50,17 +68,16 @@
 <script>
     let money = 20;
     let personIndex = 0;
-    
+
     const people = [
         { name: "Иван Петров", city: "Грестин", valid: true, msg: "Добрый день. Мои документы." },
-        { name: "Серпу Бенедиктов", city: "???", valid: false, msg: "О, привет! Это я, Серпу! Пустишь старика без бумажек? Я помогу потом!" },
-        { name: "???", city: "Орбит", valid: false, msg: "Просто штампуй, не задавай вопросов." }
+        { name: "Серпу Бенедиктов", city: "???", valid: false, msg: "О, привет! Это я, Серпу! Пустишь старика без бумажек?" },
+        { name: "Шишкин К.", city: "Орбит", valid: false, msg: "Просто штампуй, не задавай вопросов." }
     ];
 
     function updatePerson() {
         if (personIndex >= people.length) {
-            alert("Смена окончена! Семья выжила .");
-            location.reload();
+            showFinalReport();
             return;
         }
         const p = people[personIndex];
@@ -71,28 +88,49 @@
 
     function check(isApprove) {
         const p = people[personIndex];
-        
+
         if (isApprove === p.valid) {
             money += 5;
             document.getElementById('dialogue-box').innerText = "ПРАВИЛЬНО. +5$";
         } else {
-            money -= 5; // Большой штраф для теста ареста
+            money -= 5;
             document.getElementById('dialogue-box').innerText = "ОШИБКА! Штраф -5$";
             
-            if (money < 10) {
-                showArrest();
+            if (money < 0) {
+                showArrest("Вы обанкротились из-за штрафов.");
                 return;
             }
         }
-        
+
         document.getElementById('money-display').innerText = money;
         personIndex++;
         setTimeout(updatePerson, 1000);
     }
 
-    function showArrest() {
+    function showFinalReport() {
+        const earned = money;
+        const food = 10;
+        const heat = 5;
+        const total = earned - food - heat;
+
+        document.getElementById('report-screen').style.display = 'block';
+        document.getElementById('earned-val').innerText = earned;
+        document.getElementById('total-val').innerText = total;
+
+        if (total < 0) {
+            document.getElementById('family-status').innerText = "СЕМЬЯ ГОЛОДАЕТ И ЗАМЕРЗАЕТ!";
+            document.getElementById('family-status').style.color = "red";
+            setTimeout(() => showArrest("У вас не осталось денег на жизнь."), 2500);
+        } else {
+            document.getElementById('family-status').innerText = "СЕМЬЯ В ПОРЯДКЕ";
+            document.getElementById('family-status').style.color = "green";
+        }
+    }
+
+    function showArrest(reason) {
+        document.getElementById('report-screen').style.display = 'none';
         document.getElementById('arrest-screen').style.display = 'block';
-        document.getElementById('final-money').innerText = "Ваш баланс: " + money + "$";
+        document.getElementById('final-money').innerText = reason + " Итог: " + money + "$";
     }
 
     updatePerson();
