@@ -24,14 +24,14 @@
 
 <div id="game-container">
     <div id="arrest-screen">
-        <h1 style="color: #ff0000;">ВЫ АРЕСТОВАНЫ</h1>
-        <p id="final-money" style="font-size: 20px; margin-top: 15px;"></p>
+        <h1 id="arrest-title" style="color: #ff0000;">ВЫ АРЕСТОВАНЫ</h1>
+        <p id="final-money" style="font-size: 18px; margin: 20px; line-height: 1.5;"></p>
         <button onclick="location.reload()" style="background: red; color: white; width: auto; padding: 10px 40px;">ПЕРЕИГРАТЬ</button>
     </div>
 
     <div id="report-screen">
         <div class="report-paper">
-            <h2 id="day-title" style="text-align: center; border-bottom: 2px solid #000;">ОТЧЕТ ЗА ДЕНЬ</h2>
+            <h2 id="day-title" style="text-align: center; border-bottom: 2px solid #000;">ОТЧЕТ</h2>
             <p>Баланс: <span id="earned-val">0</span>$</p>
             <p>Отопление: <span class="red-text">-5$</span></p>
             <p>Еда: <span class="red-text">-10$</span></p>
@@ -65,29 +65,34 @@
     let money = 20;
     let currentDay = 1;
     let personInDay = 0;
-    const maxPersonsPerDay = 3;
+    const maxPersonsPerDay = 4; // Теперь по 4 человека
 
     const people = [
         // День 1
-        { name: "Иван Петров", city: "Грестин", valid: true, msg: "Добрый день. Мои документы." },
-        { name: "Серпу Бенедиктов", city: "???", valid: false, msg: "О, привет! Это я, Серпу! Пустишь старика?" },
-        { name: "Шишкин К.", city: "Орбит", valid: false, msg: "Просто штампуй, не задавай вопросов." },
+        { name: "Иван Петров", city: "Грестин", valid: true, msg: "Добрый день." },
+        { name: "Серпу Б.", city: "???", valid: false, msg: "Пустишь старика?" },
+        { name: "Шишкин К.", city: "Орбит", valid: false, msg: "Просто штампуй." },
+        { name: "Анна С.", city: "Парадиз", valid: true, msg: "К сестре еду." },
         // День 2
-        { name: "Анна Соколова", city: "Парадиз", valid: true, msg: "Я приехала навестить сестру." },
-        { name: "Неизвестный", city: "Колечия", valid: false, msg: "Я потерял часть паспорта, но мне очень надо." },
-        { name: "Дмитрий Волков", city: "Грестин", valid: true, msg: "Слава Арстотцке!" },
+        { name: "Дмитрий В.", city: "Грестин", valid: true, msg: "Слава Арстотцке!" },
+        { name: "Неизвестный", city: "Колечия", valid: false, msg: "Потерял паспорт." },
+        { name: "Мария К.", city: "Парадиз", valid: true, msg: "На конференцию." },
+        { name: "Виктор Ц.", city: "Ленинград", valid: false, msg: "Перемен!" },
         // День 3
-        { name: "Элиза Росс", city: "Вестерло", valid: false, msg: "Мой город переименовали, это старый бланк." },
-        { name: "Виктор Цой", city: "Ленинград", valid: false, msg: "Перемен требуют наши сердца!" },
-        { name: "Олег Меньшиков", city: "Грестин", valid: true, msg: "Возвращаюсь из командировки." },
+        { name: "Олег М.", city: "Грестин", valid: true, msg: "Из командировки." },
+        { name: "Элиза Р.", city: "Вестерло", valid: false, msg: "Старый бланк." },
+        { name: "Игорь Н.", city: "Орбит", valid: true, msg: "Домой хочу." },
+        { name: "Борис Ж.", city: "Колечия", valid: false, msg: "Я от Кости." },
         // День 4
-        { name: "Странный Тип", city: "Мордор", valid: false, msg: "Я несу кольцо... э-э, я по делам." },
-        { name: "Елена Прекрасная", city: "Орбит", valid: true, msg: "Я здесь проездом." },
-        { name: "Агент 007", city: "Лондон", valid: false, msg: "Меня зовут Бонд. Джеймс Бонд." },
+        { name: "Елена П.", city: "Орбит", valid: true, msg: "Я проездом." },
+        { name: "Странный Тип", city: "Мордор", valid: false, msg: "Несу кольцо." },
+        { name: "Юрий Г.", city: "Грестин", valid: true, msg: "Поехали!" },
+        { name: "Агент 007", city: "Лондон", valid: false, msg: "Бонд. Джеймс." },
         // День 5
-        { name: "Старик Джорджи", city: "???", valid: false, msg: "Я опять пришел! Смотри, я нарисовал паспорт!" },
-        { name: "Мария Кюри", city: "Парадиз", valid: true, msg: "Научная конференция начинается завтра." },
-        { name: "Последний Герой", city: "Грестин", valid: true, msg: "Я последний в очереди сегодня?" }
+        { name: "Джорджи", city: "???", valid: false, msg: "Нарисовал сам!" },
+        { name: "Михаил С.", city: "Грестин", valid: true, msg: "Все честно." },
+        { name: "Катя Л.", city: "Парадиз", valid: true, msg: "Работа ждет." },
+        { name: "Последний", city: "Грестин", valid: true, msg: "Я последний?" }
     ];
 
     function updatePerson() {
@@ -99,12 +104,6 @@
         }
 
         const p = people[globalIndex];
-        if (!p) {
-            alert("Поздравляем! Вы прошли все 5 дней!");
-            location.reload();
-            return;
-        }
-
         document.getElementById('p-name').innerText = p.name;
         document.getElementById('p-city').innerText = p.city;
         document.getElementById('dialogue-box').innerText = p.msg;
@@ -120,7 +119,6 @@
         } else {
             money -= 5;
             document.getElementById('dialogue-box').innerText = "ОШИБКА! Штраф -5$";
-            if (money < 0) { showArrest("Вы обанкротились."); return; }
         }
 
         document.getElementById('money-display').innerText = money;
@@ -129,32 +127,30 @@
     }
 
     function showFinalReport() {
-        const food = 10;
-        const heat = 5;
-        money = money - food - heat;
+        money = money - 15; // Расходы за день (10 еда + 5 тепло)
 
         document.getElementById('report-screen').style.display = 'block';
         document.getElementById('day-title').innerText = "ОТЧЕТ ЗА ДЕНЬ " + currentDay;
-        document.getElementById('earned-val').innerText = money + food + heat;
+        document.getElementById('earned-val').innerText = money + 15;
         document.getElementById('total-val').innerText = money;
 
         if (money < 0) {
-            document.getElementById('family-status').innerText = "СЕМЬЯ ПОГИБЛА ОТ ГОЛОДА!";
-            document.getElementById('family-status').style.color = "red";
+            document.getElementById('family-status').innerText = "СЕМЬЯ ГОЛОДАЕТ!";
             document.getElementById('next-day-btn').style.display = "none";
-            setTimeout(() => showArrest("У вас закончились средства."), 2500);
+            setTimeout(() => showArrest("У вас не осталось денег на жизнь."), 2000);
         } else {
             document.getElementById('family-status').innerText = "СЕМЬЯ В ПОРЯДКЕ";
-            document.getElementById('family-status').style.color = "green";
+        }
+
+        // Если это конец 5-го дня
+        if (currentDay === 5 && money >= 0) {
+            document.getElementById('next-day-btn').innerText = "ЗАВЕРШИТЬ СЛУЖБУ";
+            document.getElementById('next-day-btn').onclick = finalEnding;
         }
     }
 
     function nextDay() {
         currentDay++;
-        if (currentDay > 5) {
-            showArrest("ВЫ ВЫЖИЛИ ВСЕ 5 ДНЕЙ! ГЕРОЙ АРСТОТЦКИ!");
-            return;
-        }
         personInDay = 0;
         document.getElementById('report-screen').style.display = 'none';
         document.getElementById('day-display').innerText = "ДЕНЬ " + currentDay;
@@ -162,10 +158,21 @@
         updatePerson();
     }
 
+    function finalEnding() {
+        if (money >= 40) {
+            document.getElementById('arrest-title').innerText = "НОВАЯ ЖИЗНЬ";
+            document.getElementById('arrest-title').style.color = "green";
+            showArrest("Ты уехал вместе с семьей практически на все деньги в Орбит.");
+        } else {
+            document.getElementById('arrest-title').innerText = "АРЕСТ";
+            showArrest("Вы арестованы, ваше имущество конфисковано, вы уволены из-за подозрения в коррупции, семья голодает.");
+        }
+    }
+
     function showArrest(reason) {
         document.getElementById('report-screen').style.display = 'none';
         document.getElementById('arrest-screen').style.display = 'block';
-        document.getElementById('final-money').innerText = reason + " Итоговый счет: " + money + "$";
+        document.getElementById('final-money').innerText = reason + "\nВаш баланс: " + money + "$";
     }
 
     updatePerson();
