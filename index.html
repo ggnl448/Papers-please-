@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Papers, Please - Day 1</title>
+    <title>Papers, Please - 5 Days Edition</title>
     <style>
         body { background: #1a1a1a; color: #eee; font-family: 'Courier New', monospace; margin: 0; display: flex; justify-content: center; }
         #game-container { width: 100%; max-width: 600px; background: #333; border: 4px solid #555; padding: 15px; position: relative; min-height: 90vh; }
@@ -15,7 +15,6 @@
         .approve { background: #4caf50; color: white; }
         .deny { background: #f44336; color: white; }
         
-        /* Стили для финального отчета */
         #report-screen, #arrest-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; display: none; text-align: center; padding-top: 50px; }
         .report-paper { background: #fff; color: #000; width: 70%; margin: 0 auto; padding: 20px; text-align: left; box-shadow: 10px 10px 0 #444; }
         .red-text { color: #d32f2f; font-weight: bold; }
@@ -24,30 +23,27 @@
 <body>
 
 <div id="game-container">
-    <!-- Экран ареста -->
     <div id="arrest-screen">
         <h1 style="color: #ff0000;">ВЫ АРЕСТОВАНЫ</h1>
-        <img src="https://gstatic.com" style="width: 80%; border: 3px solid red;">
         <p id="final-money" style="font-size: 20px; margin-top: 15px;"></p>
         <button onclick="location.reload()" style="background: red; color: white; width: auto; padding: 10px 40px;">ПЕРЕИГРАТЬ</button>
     </div>
 
-    <!-- Экран отчета в конце смены -->
     <div id="report-screen">
         <div class="report-paper">
-            <h2 style="text-align: center; border-bottom: 2px solid #000;">ОТЧЕТ ЗА ДЕНЬ</h2>
-            <p>Заработано: <span id="earned-val">0</span>$</p>
+            <h2 id="day-title" style="text-align: center; border-bottom: 2px solid #000;">ОТЧЕТ ЗА ДЕНЬ</h2>
+            <p>Баланс: <span id="earned-val">0</span>$</p>
             <p>Отопление: <span class="red-text">-5$</span></p>
             <p>Еда: <span class="red-text">-10$</span></p>
             <hr>
-            <p style="font-size: 1.2em;">ИТОГО: <b id="total-val">0</b>$</p>
+            <p style="font-size: 1.2em;">ОСТАТОК: <b id="total-val">0</b>$</p>
             <p id="family-status" style="font-weight: bold;"></p>
-            <button onclick="location.reload()" style="background: #333; color: white; width: 100%; margin-top: 10px;">СЛЕДУЮЩИЙ ДЕНЬ</button>
+            <button id="next-day-btn" onclick="nextDay()" style="background: #333; color: white; width: 100%; margin-top: 10px;">СЛЕДУЮЩИЙ ДЕНЬ</button>
         </div>
     </div>
 
     <div class="stats">
-        <div>ДЕНЬ 1</div>
+        <div id="day-display">ДЕНЬ 1</div>
         <div>СЧЕТ: <span id="money-display">20</span>$</div>
     </div>
 
@@ -67,27 +63,56 @@
 
 <script>
     let money = 20;
-    let personIndex = 0;
+    let currentDay = 1;
+    let personInDay = 0;
+    const maxPersonsPerDay = 3;
 
     const people = [
+        // День 1
         { name: "Иван Петров", city: "Грестин", valid: true, msg: "Добрый день. Мои документы." },
-        { name: "Серпу Бенедиктов", city: "???", valid: false, msg: "О, привет! Это я, Серпу! Пустишь старика без бумажек?" },
-        { name: "Шишкин К.", city: "Орбит", valid: false, msg: "Просто штампуй, не задавай вопросов." }
+        { name: "Серпу Бенедиктов", city: "???", valid: false, msg: "О, привет! Это я, Серпу! Пустишь старика?" },
+        { name: "Шишкин К.", city: "Орбит", valid: false, msg: "Просто штампуй, не задавай вопросов." },
+        // День 2
+        { name: "Анна Соколова", city: "Парадиз", valid: true, msg: "Я приехала навестить сестру." },
+        { name: "Неизвестный", city: "Колечия", valid: false, msg: "Я потерял часть паспорта, но мне очень надо." },
+        { name: "Дмитрий Волков", city: "Грестин", valid: true, msg: "Слава Арстотцке!" },
+        // День 3
+        { name: "Элиза Росс", city: "Вестерло", valid: false, msg: "Мой город переименовали, это старый бланк." },
+        { name: "Виктор Цой", city: "Ленинград", valid: false, msg: "Перемен требуют наши сердца!" },
+        { name: "Олег Меньшиков", city: "Грестин", valid: true, msg: "Возвращаюсь из командировки." },
+        // День 4
+        { name: "Странный Тип", city: "Мордор", valid: false, msg: "Я несу кольцо... э-э, я по делам." },
+        { name: "Елена Прекрасная", city: "Орбит", valid: true, msg: "Я здесь проездом." },
+        { name: "Агент 007", city: "Лондон", valid: false, msg: "Меня зовут Бонд. Джеймс Бонд." },
+        // День 5
+        { name: "Старик Джорджи", city: "???", valid: false, msg: "Я опять пришел! Смотри, я нарисовал паспорт!" },
+        { name: "Мария Кюри", city: "Парадиз", valid: true, msg: "Научная конференция начинается завтра." },
+        { name: "Последний Герой", city: "Грестин", valid: true, msg: "Я последний в очереди сегодня?" }
     ];
 
     function updatePerson() {
-        if (personIndex >= people.length) {
+        let globalIndex = (currentDay - 1) * maxPersonsPerDay + personInDay;
+        
+        if (personInDay >= maxPersonsPerDay) {
             showFinalReport();
             return;
         }
-        const p = people[personIndex];
+
+        const p = people[globalIndex];
+        if (!p) {
+            alert("Поздравляем! Вы прошли все 5 дней!");
+            location.reload();
+            return;
+        }
+
         document.getElementById('p-name').innerText = p.name;
         document.getElementById('p-city').innerText = p.city;
         document.getElementById('dialogue-box').innerText = p.msg;
     }
 
     function check(isApprove) {
-        const p = people[personIndex];
+        let globalIndex = (currentDay - 1) * maxPersonsPerDay + personInDay;
+        const p = people[globalIndex];
 
         if (isApprove === p.valid) {
             money += 5;
@@ -95,42 +120,52 @@
         } else {
             money -= 5;
             document.getElementById('dialogue-box').innerText = "ОШИБКА! Штраф -5$";
-            
-            if (money < 0) {
-                showArrest("Вы обанкротились из-за штрафов.");
-                return;
-            }
+            if (money < 0) { showArrest("Вы обанкротились."); return; }
         }
 
         document.getElementById('money-display').innerText = money;
-        personIndex++;
+        personInDay++;
         setTimeout(updatePerson, 1000);
     }
 
     function showFinalReport() {
-        const earned = money;
         const food = 10;
         const heat = 5;
-        const total = earned - food - heat;
+        money = money - food - heat;
 
         document.getElementById('report-screen').style.display = 'block';
-        document.getElementById('earned-val').innerText = earned;
-        document.getElementById('total-val').innerText = total;
+        document.getElementById('day-title').innerText = "ОТЧЕТ ЗА ДЕНЬ " + currentDay;
+        document.getElementById('earned-val').innerText = money + food + heat;
+        document.getElementById('total-val').innerText = money;
 
-        if (total < 0) {
-            document.getElementById('family-status').innerText = "СЕМЬЯ ГОЛОДАЕТ И ЗАМЕРЗАЕТ!";
+        if (money < 0) {
+            document.getElementById('family-status').innerText = "СЕМЬЯ ПОГИБЛА ОТ ГОЛОДА!";
             document.getElementById('family-status').style.color = "red";
-            setTimeout(() => showArrest("У вас не осталось денег на жизнь."), 2500);
+            document.getElementById('next-day-btn').style.display = "none";
+            setTimeout(() => showArrest("У вас закончились средства."), 2500);
         } else {
             document.getElementById('family-status').innerText = "СЕМЬЯ В ПОРЯДКЕ";
             document.getElementById('family-status').style.color = "green";
         }
     }
 
+    function nextDay() {
+        currentDay++;
+        if (currentDay > 5) {
+            showArrest("ВЫ ВЫЖИЛИ ВСЕ 5 ДНЕЙ! ГЕРОЙ АРСТОТЦКИ!");
+            return;
+        }
+        personInDay = 0;
+        document.getElementById('report-screen').style.display = 'none';
+        document.getElementById('day-display').innerText = "ДЕНЬ " + currentDay;
+        document.getElementById('money-display').innerText = money;
+        updatePerson();
+    }
+
     function showArrest(reason) {
         document.getElementById('report-screen').style.display = 'none';
         document.getElementById('arrest-screen').style.display = 'block';
-        document.getElementById('final-money').innerText = reason + " Итог: " + money + "$";
+        document.getElementById('final-money').innerText = reason + " Итоговый счет: " + money + "$";
     }
 
     updatePerson();
