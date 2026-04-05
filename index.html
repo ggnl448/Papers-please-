@@ -65,8 +65,9 @@
     let money = 20;
     let currentDay = 1;
     let personInDay = 0;
-    const maxPersonsPerDay = 4; // Теперь по 4 человека
+    const maxPersonsPerDay = 4;
 
+    // Люди
     const people = [
         // День 1
         { name: "Иван Петров", city: "Грестин", valid: true, msg: "Добрый день." },
@@ -95,23 +96,37 @@
         { name: "Последний", city: "Грестин", valid: true, msg: "Я последний?" }
     ];
 
+    // Перемешивание массива
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    // Разбиваем людей по дням и перемешиваем
+    let days = [];
+    for (let i = 0; i < people.length; i += maxPersonsPerDay) {
+        let group = people.slice(i, i + maxPersonsPerDay);
+        shuffle(group);
+        days.push(group);
+    }
+
     function updatePerson() {
-        let globalIndex = (currentDay - 1) * maxPersonsPerDay + personInDay;
-        
         if (personInDay >= maxPersonsPerDay) {
             showFinalReport();
             return;
         }
 
-        const p = people[globalIndex];
+        const p = days[currentDay - 1][personInDay];
+
         document.getElementById('p-name').innerText = p.name;
         document.getElementById('p-city').innerText = p.city;
         document.getElementById('dialogue-box').innerText = p.msg;
     }
 
     function check(isApprove) {
-        let globalIndex = (currentDay - 1) * maxPersonsPerDay + personInDay;
-        const p = people[globalIndex];
+        const p = days[currentDay - 1][personInDay];
 
         if (isApprove === p.valid) {
             money += 5;
@@ -127,7 +142,7 @@
     }
 
     function showFinalReport() {
-        money = money - 15; // Расходы за день (10 еда + 5 тепло)
+        money = money - 15;
 
         document.getElementById('report-screen').style.display = 'block';
         document.getElementById('day-title').innerText = "ОТЧЕТ ЗА ДЕНЬ " + currentDay;
@@ -142,7 +157,6 @@
             document.getElementById('family-status').innerText = "СЕМЬЯ В ПОРЯДКЕ";
         }
 
-        // Если это конец 5-го дня
         if (currentDay === 5 && money >= 0) {
             document.getElementById('next-day-btn').innerText = "ЗАВЕРШИТЬ СЛУЖБУ";
             document.getElementById('next-day-btn').onclick = finalEnding;
@@ -165,7 +179,7 @@
             showArrest("Ты уехал вместе с семьей практически на все деньги в Орбит.");
         } else {
             document.getElementById('arrest-title').innerText = "АРЕСТ";
-            showArrest("Вы арестованы, ваше имущество конфисковано, вы уволены из-за подозрения в коррупции, семья голодает.");
+            showArrest("Вы арестованы, имущество конфисковано, вы уволены за коррупцию.");
         }
     }
 
